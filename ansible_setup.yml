@@ -1,0 +1,54 @@
+---
+- name: Configure Elasticsearch
+  hosts: all
+  become: yes
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install required packages
+      apt:
+        name:
+          - openjdk-11-jre
+          - wget
+          - awscli
+          - elasticsearch
+        state: present
+
+    - name: Download and install Elasticsearch
+      apt_repository:
+        repo: "deb https://artifacts.elastic.co/packages/7.x/apt stable main"
+        state: present
+      when: ansible_distribution == "Ubuntu"
+
+    - name: Enable and start Elasticsearch service
+      systemd:
+        name: elasticsearch
+        enabled: yes
+        state: started
+
+    - name: Configure Elasticsearch settings
+      lineinfile:
+        path: /etc/elasticsearch/elasticsearch.yml
+        regexp: '^{{ item.key }}:'
+        line: "{{ item.key }}: {{ item.value }}"
+      with_items:
+        - { key: 'cluster.name', value: 'my-cluster' }
+        - { key: 'network.host', value: '0.0.0.0' }
+        - { key: 'http.port', value: '9200' }
+      notify: restart elasticsearch
+
+    - name: Create a cron job to move old data to S3
+      cron:
+        name: "Move old Elasticsearch data to S3"
+        minute: "0"
+        hour: "0"
+        job: "/usr/bin/find /var/lib/elasticsearch/nodes/0/indices/* -type d -mtime +30 -exec aws s3 mv {} s3://your-unique-elasticsearch-s3-bucket/ \\;"
+      when: aws_s3_bucket.elasticsearch_backup_bucket.bucket is defined
+
+  handlers:
+    - name: restart elasticsearch
+      systemd:
+        name: elasticsearch
+        state: restarted
