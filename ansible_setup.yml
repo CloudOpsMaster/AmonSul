@@ -44,7 +44,7 @@
         name: "Move old Elasticsearch data to S3"
         minute: "0"
         hour: "0"
-        job: "/usr/bin/find /var/lib/elasticsearch/nodes/0/indices/* -type d -mtime +30 -exec aws s3 mv {} s3://your-unique-elasticsearch-s3-bucket/ \\;"
+        job: "/usr/bin/find /var/lib/elasticsearch/nodes/0/indices/* -type d -mtime +30 -exec aws s3 mv {} s3://elasticsearch-s3-bucket-23102024-task/ \\;"
       when: aws_s3_bucket.elasticsearch_backup_bucket.bucket is defined
 
   handlers:
