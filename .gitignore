@@ -1,0 +1,14 @@
+# Terraform files
+*.tfstate
+*.tfstate.*
+*.backup
+.terraform/
+terraform.tfvars
+terraform.tfstate.d/
+
+# SSH keys (Ensure sensitive keys are not uploaded)
+*.pem
+*.pub
+
+# Logs
+*.log
